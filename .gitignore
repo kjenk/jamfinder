@@ -1,0 +1,13 @@
+local_settings.py
+**.bak
+**.pyc
+**.swp
+.Python
+bin/
+include/
+lib/
+src/
+.enter.tcsh
+.enter.local.tcsh
+config.py
+
