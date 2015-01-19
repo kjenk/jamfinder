@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+      html { height: 100% }
+      body { height: 100%; margin: 0; padding: 0 }
+      #map_canvas { height: 100% }
+      .sidefloat {
+        max-width: 300px;
+        padding: 19px 29px 29px;
+        margin: 0 auto 0px;
+        background-color: #fff;
+        border: 1px solid #e5e5e5;
+        -webkit-border-radius: 5px;
+           -moz-border-radius: 5px;
+                border-radius: 5px;
+      }
+      .sidebox {
+        -webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+        -moz-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+        box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+      }
+      .eventinfo {
+        margin-bottom: 12px;
+        width: 360px;
+      }
+      art {
+        font-size: 24px;
+        font-weight: bold;
+      }
+      ven {
+        font-size: 18px;
+        font-weight: bold;
+      }
+      dat {
+        font-size: 18px;
+        font-weight: bold;
+      }
+    </style>
+    <link href="css/bootstrap.css" rel="stylesheet" media="screen">
+    <script type="text/javascript"
+      src="https://maps.googleapis.com/maps/api/js?key={{google_maps_api_key}}&sensor=false">
+    </script>
+
+    <script type="text/javascript">
+
+      var concerts = {{concerts}};
+      var default_track = '74928577';
+      
+      var infowindow = new google.maps.InfoWindow({
+          content: ""
+      });
+      
+      function addMarker(lat, lng, map, concert){
+        var latlng = new google.maps.LatLng(lat,lng);
+        var marker = new google.maps.Marker({
+            position: latlng,
+            map: map
+        });
+
+        var track = '';
+        function set_track() {
+          if (concert=='blah') {
+            return default_track;
+          } else {
+            return concert.songs[0].track_id;
+          }
+        };
+        track = set_track();
+
+        var artist = '';
+        function set_artist() {
+          if (concert=='blah') {
+            return 'artist';
+          } else {
+            return concert.artists[0].name;
+          }
+        };
+        artist = set_artist();
+
+        var venue = '';
+        function set_venue() {
+          if (concert=='blah') {
+            return 'venue';
+          } else {
+            return concert.venue.name;
+          }
+        };
+        venue = set_venue();
+
+        var event_url = concert.event_url;
+
+        google.maps.event.addListener(marker, 'click', function() {
+          infowindow.setContent('<div class="eventinfo"><a href="' + event_url + '"><art>'+ artist + '</art><br> playing at <ven>' + venue + '</ven><br> on <dat>' + concert.event_date + '</dat></a></div><iframe width="100%" height="166" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url=http%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F'+ 
+            track 
+            + '"></iframe>');
+          infowindow.open(map,marker);
+        });
+      };
+
+      var geocoder;
+      var map;
+
+      function initialize() {
+        var mapOptions = {
+          center: new google.maps.LatLng(39.951673, -75.191287),
+          zoom: 10,
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+        map = new google.maps.Map(document.getElementById("map_canvas"),
+            mapOptions);
+
+        addMarker(39.951673, -75.191287, map, 'blah');
+        addMarker(39.851673, -75.241287, map, 'blah');
+
+        geocoder = new google.maps.Geocoder();
+
+        for (var i=0; i<concerts.length; i++) {
+          addMarker(concerts[i].venue.lat, concerts[i].venue.lng, map, concerts[i]);
+        }
+      };
+
+      function codeAddress() {
+        var address = document.getElementById('address').value;
+        geocoder.geocode( { 'address': address}, function(results, status) {
+          if (status == google.maps.GeocoderStatus.OK) {
+            map.setCenter(results[0].geometry.location);
+          } else {
+            alert('Geocode was not successful for the following reason: ' + status);
+          }
+        });
+      };
+
+      function post_to_url(path, params, method) {
+          method = method || "post"; // Set method to post by default, if not specified.
+
+          // The rest of this code assumes you are not using a library.
+          // It can be made less wordy if you use one.
+          var form = document.createElement("form");
+          form.setAttribute("method", method);
+          form.setAttribute("action", path);
+
+          for(var key in params) {
+              if(params.hasOwnProperty(key)) {
+                  var hiddenField = document.createElement("input");
+                  hiddenField.setAttribute("type", "hidden");
+                  hiddenField.setAttribute("name", key);
+                  hiddenField.setAttribute("value", params[key]);
+
+                  form.appendChild(hiddenField);
+               }
+          }
+
+          document.body.appendChild(form);
+          form.submit();
+      }                
+
+
+    </script>
+  </head>
+  <body onload="initialize()">
+    <script src="js/bootstrap.min.js"></script>
+    <div class="navbar" style="margin-bottom:0; position:absolute; left:100px; top: 20px; z-index:200;">
+      <div class="navbar-inner" style="padding-right:3px">
+        <a class="brand" href="#">Beets</a>
+      </div>
+    </div>
+      <div id="map_canvas" style="width:100%; height:100% "></div> 
+        <div class="sidebox" style="position:absolute; bottom:60px; right: 55px; width: 240px;">
+          <div class="sidefloat" style="height:138px;">
+          <form class="form-search" action="" method="get" style="position:absolute; top:4px; left:10px">
+            <fieldset>
+              <legend style="padding:0;margin:0;"><strong>Beets</strong>/JamFinder</legend>
+              <label style="padding:4px 0 0 0;">Location</label><br>
+              <input type="text" class="input-medium search-query" id="address" placeholder="Philadelphia, PA" style="width:130px">
+              <button type="submit" class="btn" onclick="codeAddress();">Go</button> 
+              <label style="padding: 10px 0 0 0">Radius (miles)</label><br>
+              <input type="hidden" name="radius" value="" id="btn-input" />
+              <div class="btn-group" data-toggle="buttons-radio" style="padding:0px 0px 10px 0px">
+                <button id="btn-one" class="btn" type="button" data-toggle="button" name="radius" value="2">2</button>
+                <button id="btn-two" class="btn" type="button" data-toggle="button" name="radius" value="10">10</button>
+                <button id="btn-thr" class="btn" type="button" data-toggle="button" name="radius" value="50">50</button>
+              </div>
+              <script>
+                var btns = ['btn-one', 'btn-two', 'btn-thr'];
+                var input = document.getElementById('btn-input');
+                for(var i = 0; i < btns.length; i++) {
+                  document.getElementById(btns[i]).addEventListener('click', function() {
+                    for (var j=0; j<btns.length; j++) {
+                      if (j!==i) {
+                        document.getElementById(btns[j]).className="btn";
+                      }
+                    }
+                    input.value = this.value;
+                    this.className="btn active";
+                    post_to_url(index/update, this.value, "post");
+                  });
+                }
+
+              </script>
+              <br>
+              <!-- <button type="submit" value="Submit" onclick="post_to_url(index/update, {'address':address,'radius':radius}, "post");" class="btn">Submit</button> -->
+            </fieldset>
+          </form>
+        </div>
+      </div>
+  </body>
+</html>
